@@ -2,6 +2,11 @@
 
 A multi-agent collaborative AI system that automatically generates, analyzes, and optimizes advertising slogans based on product information.
 
+## Demo
+Watch our demo video to see the AI Advertising Slogan Generator in action:
+
+[![Demo Video](https://img.youtube.com/vi/1YAVS9r9pCQ/0.jpg)](https://www.youtube.com/watch?v=1YAVS9r9pCQ)
+
 ## Features
 
 ### 🤖 AI Agent Team
