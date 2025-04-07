@@ -1,5 +1,4 @@
-from phi.agent import Agent
-from phi.model.google import Gemini
+from google import genai
 import os
 from dotenv import load_dotenv
 
@@ -9,27 +8,19 @@ class SloganAgent:
             # 確保環境變數已載入
             load_dotenv()
             
-            # 從環境變數獲取 API KEY
+            # 從環境變數獲取 API KEY 和 MODEL NAME
             api_key = os.getenv("GOOGLE_API_KEY")
+            model_name = os.getenv("MODEL_NAME")
+            
             if not api_key:
                 raise ValueError("GOOGLE_API_KEY not found in environment variables")
+            if not model_name:
+                raise ValueError("MODEL_NAME not found in environment variables")
+                
+            # 初始化 client
+            self.client = genai.Client(api_key=api_key)
+            self.model_name = model_name
             
-            # 初始化 model
-            model = Gemini(id="gemini-pro", api_key=api_key)
-            
-            # 初始化 agent
-            self.agent = Agent(
-                model=model,
-                instructions=[
-                    "You are a creative advertising slogan expert that:",
-                    "1. Creates catchy and memorable slogans",
-                    "2. Highlights key product features",
-                    "3. Uses concise and impactful language",
-                    "4. Ensures slogans are under 40 characters",
-                    "Be specific and focused on the product's unique selling points"
-                ],
-                markdown=True
-            )
         except Exception as e:
             raise Exception(f"Error initializing SloganAgent: {str(e)}")
 
@@ -53,10 +44,11 @@ class SloganAgent:
         """
         
         try:
-            # 使用同步方式調用
-            response = self.agent.run(message=prompt)
-            # return "這是個錯誤" 
-            return response.content.strip()
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt
+            )
+            return response.text.strip()
         except Exception as e:
             raise Exception(f"Error generating slogan: {str(e)}")
 

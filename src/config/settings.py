@@ -10,7 +10,7 @@ class Settings:
     def __init__(self):
         """初始化配置"""
         self.api_key = os.getenv("API_KEY")
-        self.model_name = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
+        self.model_name = os.getenv("MODEL_NAME", "gemini-2.0-flash-exp")
         # 可以添加更多配置項
         
 settings = Settings()

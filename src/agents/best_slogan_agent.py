@@ -1,5 +1,4 @@
-from phi.agent import Agent
-from phi.model.google import Gemini
+from google import genai
 import os
 from dotenv import load_dotenv
 
@@ -9,26 +8,19 @@ class BestSloganAgent:
             # 確保環境變數已載入
             load_dotenv()
             
-            # 從環境變數獲取 API KEY
+            # 從環境變數獲取 API KEY 和 MODEL NAME
             api_key = os.getenv("GOOGLE_API_KEY")
+            model_name = os.getenv("MODEL_NAME")
+            
             if not api_key:
                 raise ValueError("GOOGLE_API_KEY not found in environment variables")
+            if not model_name:
+                raise ValueError("MODEL_NAME not found in environment variables")
+                
+            # 初始化 client
+            self.client = genai.Client(api_key=api_key)
+            self.model_name = model_name
             
-            # 初始化 model
-            model = Gemini(id="gemini-pro", api_key=api_key)
-            
-            # 初始化 agent
-            self.agent = Agent(
-                model=model,
-                instructions=[
-                    "You are a Traditional Chinese best slogan selector that:",
-                    "1. Analyzes multiple slogans and their scores",
-                    "2. Considers feedback and improvement suggestions",
-                    "3. Provides detailed explanation for selection",
-                    "4. Makes recommendations for optimization"
-                ],
-                markdown=True
-            )
         except Exception as e:
             raise Exception(f"Error initializing BestSloganAgent: {str(e)}")
 
@@ -48,10 +40,13 @@ class BestSloganAgent:
         """
         
         try:
-            response = self.agent.run(message=prompt)
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt
+            )
             return {
                 "best_slogan": self._find_best_slogan(slogans_data),
-                "analysis": response.content.strip()
+                "analysis": response.text.strip()
             }
         except Exception as e:
             raise Exception(f"Error selecting best slogan: {str(e)}")

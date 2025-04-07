@@ -1,5 +1,4 @@
-from phi.agent import Agent
-from phi.model.google import Gemini
+from google import genai
 import os
 from dotenv import load_dotenv
 
@@ -9,26 +8,19 @@ class InspectAgent:
             # 確保環境變數已載入
             load_dotenv()
             
-            # 從環境變數獲取 API KEY
+            # 從環境變數獲取 API KEY 和 MODEL NAME
             api_key = os.getenv("GOOGLE_API_KEY")
+            model_name = os.getenv("MODEL_NAME")
+            
             if not api_key:
                 raise ValueError("GOOGLE_API_KEY not found in environment variables")
+            if not model_name:
+                raise ValueError("MODEL_NAME not found in environment variables")
                 
-            # 初始化 model
-            model = Gemini(id="gemini-pro", api_key=api_key)
+            # 初始化 client
+            self.client = genai.Client(api_key=api_key)
+            self.model_name = model_name
             
-            # 初始化 agent
-            self.agent = Agent(
-                model=model,
-                instructions=[
-                    "You are a slogan quality inspector that:",
-                    "1. Analyzes if slogans effectively reference user input",
-                    "2. Checks for clarity and relevance",
-                    "3. Provides detailed analysis",
-                    "4. Ensures key product features are included"
-                ],
-                markdown=True
-            )
         except Exception as e:
             raise Exception(f"Error initializing InspectAgent: {str(e)}")
 
@@ -55,12 +47,16 @@ class InspectAgent:
         """
         
         try:
-            # 使用同步方式調用
-            response = self.agent.run(message=prompt)
-            analysis = response.content.strip()
+            # 使用新的 API 格式調用
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt
+            )
+            
+            analysis = response.text.strip()
             
             # 解析回應，判斷是否有效參考
-            referenced = "true" in analysis.lower()
+            referenced = "是" in analysis.lower()
             
             return {
                 "analysis": analysis,

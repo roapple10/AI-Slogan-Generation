@@ -1,5 +1,4 @@
-from phi.agent import Agent
-from phi.model.google import Gemini
+from google import genai
 import os
 import re
 from dotenv import load_dotenv
@@ -10,26 +9,19 @@ class ScoreAgent:
             # 確保環境變數已載入
             load_dotenv()
             
-            # 從環境變數獲取 API KEY
+            # 從環境變數獲取 API KEY 和 MODEL NAME
             api_key = os.getenv("GOOGLE_API_KEY")
+            model_name = os.getenv("MODEL_NAME")
+            
             if not api_key:
                 raise ValueError("GOOGLE_API_KEY not found in environment variables")
+            if not model_name:
+                raise ValueError("MODEL_NAME not found in environment variables")
+                
+            # 初始化 client
+            self.client = genai.Client(api_key=api_key)
+            self.model_name = model_name
             
-            # 初始化 model
-            model = Gemini(id="gemini-pro", api_key=api_key)
-            
-            # 初始化 agent
-            self.agent = Agent(
-                model=model,
-                instructions=[
-                    "You are a Traditional Chinese slogan scoring expert that:",
-                    "1. Always starts response with '分數：X分' format",
-                    "2. Evaluates slogan effectiveness on a 1-5 scale",
-                    "3. Provides detailed feedback in Traditional Chinese",
-                    "4. Considers both creativity and relevance"
-                ],
-                markdown=True
-            )
         except Exception as e:
             raise Exception(f"Error initializing ScoreAgent: {str(e)}")
 
@@ -84,9 +76,11 @@ class ScoreAgent:
         
         while retry_count < max_retries:
             try:
-                # 使用同步方式調用
-                response = self.agent.run(message=prompt)
-                feedback = response.content.strip()
+                response = self.client.models.generate_content(
+                    model=self.model_name,
+                    contents=prompt
+                )
+                feedback = response.text.strip()
                 
                 # 提取分數
                 score = self.extract_score(feedback)
